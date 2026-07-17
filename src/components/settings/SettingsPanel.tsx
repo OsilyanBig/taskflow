@@ -10,7 +10,6 @@ import {
   Shield,
   Swords,
   Quote,
-  Minimize2,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { AccentColor } from "@/types";
@@ -79,15 +78,16 @@ export const SettingsPanel: React.FC = () => {
                   className={clsx(
                     "w-10 h-10 rounded-xl transition-all",
                     settings.accentColor === color
-                      ? "ring-2 ring-offset-2 ring-offset-deep-bg scale-110"
+                      ? "scale-110"
                       : "opacity-70 hover:opacity-100"
                   )}
                   style={{
                     backgroundColor: ACCENT_COLORS[color].primary,
-                    ringColor:
+                    outline:
                       settings.accentColor === color
-                        ? ACCENT_COLORS[color].primary
-                        : "transparent",
+                        ? `2px solid ${ACCENT_COLORS[color].primary}`
+                        : "none",
+                    outlineOffset: "2px",
                     boxShadow:
                       settings.accentColor === color
                         ? `0 0 20px ${ACCENT_COLORS[color].glow}`
@@ -168,7 +168,7 @@ export const SettingsPanel: React.FC = () => {
                 onChange={(e) =>
                   settings.setDailyGoal(parseInt(e.target.value))
                 }
-                className="flex-1 accent-accent-blue"
+                className="flex-1 accent-blue-500"
               />
               <span className="text-sm font-bold text-white w-8 text-center">
                 {settings.dailyGoal}
@@ -192,7 +192,7 @@ export const SettingsPanel: React.FC = () => {
                 onChange={(e) =>
                   settings.setWeeklyGoal(parseInt(e.target.value))
                 }
-                className="flex-1 accent-accent-blue"
+                className="flex-1 accent-blue-500"
               />
               <span className="text-sm font-bold text-white w-8 text-center">
                 {settings.weeklyGoal}
@@ -228,6 +228,8 @@ export const SettingsPanel: React.FC = () => {
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
             >
               <label className="text-sm font-medium text-slate-300 mb-1 block">
                 Ceza XP Miktarı
