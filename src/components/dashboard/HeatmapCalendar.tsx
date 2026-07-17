@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { useStats } from "@/hooks/useStats";
+import { HeatmapData } from "@/types";
 import { MONTH_NAMES } from "@/utils/constants";
 import { Tooltip } from "@/components/ui/Tooltip";
 
@@ -11,34 +12,41 @@ const CELL_SIZE = 13;
 const CELL_GAP = 3;
 
 const LEVEL_COLORS = [
-  "rgba(255, 255, 255, 0.03)", // 0 - boş
-  "rgba(59, 130, 246, 0.2)",   // 1 - az
-  "rgba(59, 130, 246, 0.4)",   // 2 - orta
-  "rgba(59, 130, 246, 0.65)",  // 3 - çok
-  "rgba(59, 130, 246, 0.9)",   // 4 - en çok
+  "rgba(255, 255, 255, 0.03)",
+  "rgba(59, 130, 246, 0.2)",
+  "rgba(59, 130, 246, 0.4)",
+  "rgba(59, 130, 246, 0.65)",
+  "rgba(59, 130, 246, 0.9)",
 ];
+
+// Boş hücre tipi için ayrı interface
+interface HeatmapCell extends HeatmapData {
+  isEmpty?: boolean;
+}
 
 export const HeatmapCalendar: React.FC = () => {
   const { heatmapData } = useStats();
 
-  // Haftalar ve aylar hesapla
   const { weeks, monthLabels } = useMemo(() => {
-    const weeks: typeof heatmapData[][] = [];
-    let currentWeek: typeof heatmapData[] = [];
+    const weeks: HeatmapCell[][] = [];
+    let currentWeek: HeatmapCell[] = [];
 
-    // İlk günün haftanın hangi gününe denk geldiğini bul
     if (heatmapData.length > 0) {
       const firstDate = new Date(heatmapData[0].date);
-      const firstDayOfWeek = firstDate.getDay(); // 0=Pazar
+      const firstDayOfWeek = firstDate.getDay();
 
-      // Boş günler ekle (haftanın başlangıcını hizalamak için)
       for (let i = 0; i < firstDayOfWeek; i++) {
-        currentWeek.push({ date: "", count: 0, level: 0 as const });
+        currentWeek.push({
+          date: "",
+          count: 0,
+          level: 0 as const,
+          isEmpty: true,
+        });
       }
     }
 
     heatmapData.forEach((day) => {
-      currentWeek.push(day);
+      currentWeek.push({ ...day, isEmpty: false });
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
         currentWeek = [];
@@ -46,6 +54,15 @@ export const HeatmapCalendar: React.FC = () => {
     });
 
     if (currentWeek.length > 0) {
+      // Haftayı tamamla
+      while (currentWeek.length < 7) {
+        currentWeek.push({
+          date: "",
+          count: 0,
+          level: 0 as const,
+          isEmpty: true,
+        });
+      }
       weeks.push(currentWeek);
     }
 
@@ -55,7 +72,7 @@ export const HeatmapCalendar: React.FC = () => {
 
     weeks.forEach((week, weekIndex) => {
       week.forEach((day) => {
-        if (day.date) {
+        if (day.date && !day.isEmpty) {
           const month = new Date(day.date).getMonth();
           if (month !== lastMonth) {
             monthLabels.push({
@@ -150,38 +167,52 @@ export const HeatmapCalendar: React.FC = () => {
             <div className="flex gap-[3px]">
               {weeks.map((week, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-[3px]">
-                  {week.map((day, dayIndex) => (
-                    <Tooltip
-                      key={`${weekIndex}-${dayIndex}`}
-                      content={
-                        day.date
-                          ? `${new Date(day.date).toLocaleDateString("tr-TR", {
-                              day: "numeric",
-                              month: "long",
-                            })}: ${day.count} görev`
-                          : ""
-                      }
-                      position="top"
-                    >
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{
-                          delay: weekIndex * 0.005,
-                          duration: 0.2,
-                        }}
-                        className={clsx(
-                          "rounded-sm cursor-default transition-all hover:ring-1 hover:ring-white/20",
-                          !day.date && "invisible"
-                        )}
-                        style={{
-                          width: CELL_SIZE,
-                          height: CELL_SIZE,
-                          backgroundColor: LEVEL_COLORS[day.level],
-                        }}
-                      />
-                    </Tooltip>
-                  ))}
+                  {week.map((day, dayIndex) => {
+                    if (day.isEmpty) {
+                      return (
+                        <div
+                          key={`empty-${weekIndex}-${dayIndex}`}
+                          style={{
+                            width: CELL_SIZE,
+                            height: CELL_SIZE,
+                          }}
+                        />
+                      );
+                    }
+
+                    return (
+                      <Tooltip
+                        key={`${weekIndex}-${dayIndex}`}
+                        content={
+                          day.date
+                            ? `${new Date(day.date).toLocaleDateString(
+                                "tr-TR",
+                                {
+                                  day: "numeric",
+                                  month: "long",
+                                }
+                              )}: ${day.count} görev`
+                            : ""
+                        }
+                        position="top"
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{
+                            delay: weekIndex * 0.005,
+                            duration: 0.2,
+                          }}
+                          className="rounded-sm cursor-default transition-all hover:ring-1 hover:ring-white/20"
+                          style={{
+                            width: CELL_SIZE,
+                            height: CELL_SIZE,
+                            backgroundColor: LEVEL_COLORS[day.level],
+                          }}
+                        />
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               ))}
             </div>
