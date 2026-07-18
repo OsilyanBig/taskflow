@@ -23,10 +23,6 @@ export const Toggle: React.FC<ToggleProps> = ({
   disabled = false,
   className,
 }) => {
-  const trackSize = size === "sm" ? "w-9 h-5" : "w-11 h-6";
-  const thumbSize = size === "sm" ? "w-3.5 h-3.5" : "w-4.5 h-4.5";
-  const thumbTranslate = size === "sm" ? 16 : 20;
-
   return (
     <label
       className={clsx(
@@ -49,13 +45,17 @@ export const Toggle: React.FC<ToggleProps> = ({
       )}
 
       <button
+        type="button"
         role="switch"
         aria-checked={checked}
         disabled={disabled}
-        onClick={() => !disabled && onChange(!checked)}
+        onClick={(e) => {
+          e.preventDefault();
+          if (!disabled) onChange(!checked);
+        }}
         className={clsx(
-          "relative inline-flex flex-shrink-0 rounded-full transition-colors duration-200",
-          trackSize,
+          "relative inline-flex flex-shrink-0 rounded-full transition-colors duration-200 focus:outline-none",
+          size === "sm" ? "w-9 h-5" : "w-12 h-7",
           checked
             ? "bg-accent-blue shadow-glow"
             : "bg-deep-surface border border-deep-border"
@@ -63,16 +63,28 @@ export const Toggle: React.FC<ToggleProps> = ({
       >
         <motion.span
           className={clsx(
-            "absolute top-1/2 -translate-y-1/2 left-[3px] rounded-full bg-white shadow-md",
-            size === "sm" ? "w-3.5 h-3.5" : "w-[18px] h-[18px]"
+            "rounded-full bg-white shadow-md pointer-events-none",
+            size === "sm" ? "w-3.5 h-3.5" : "w-5 h-5"
           )}
           animate={{
-            x: checked ? thumbTranslate : 0,
+            x: checked
+              ? size === "sm"
+                ? 18
+                : 22
+              : size === "sm"
+              ? 3
+              : 4,
+            y: size === "sm" ? 3 : 4,
           }}
           transition={{
             type: "spring",
             stiffness: 500,
             damping: 30,
+          }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
           }}
         />
       </button>
